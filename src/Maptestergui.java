@@ -16,20 +16,18 @@ public class Maptestergui extends JFrame {
     private static final Color BG      = new Color(243, 244, 246);
     private static final Color TEXT    = new Color(31, 41, 55);
     private static final Color MUTED   = new Color(107, 114, 128);
+    private static final Color VIOLET  = new Color(139, 92, 246);
 
-    // --- UPDATED: uses MapTester (capital T) ---
+    // --- Uses MapTester (capital T) ---
     private MapTester phoneBook = new MapTester();
 
     private JTextField nameField = new JTextField();
     private JTextField numberField = new JTextField();
 
-    // Sidebar components
     private DefaultListModel<String> listModel = new DefaultListModel<String>();
     private JList<String> contactList = new JList<String>(listModel);
     private JLabel countLabel = new JLabel("0");
     private JButton deleteButton;
-    private JButton showAllButton;
-    private java.util.List<String> filterKeys = null;
     private CardLayout cardLayout = new CardLayout();
     private JPanel listCards;
 
@@ -73,7 +71,7 @@ public class Maptestergui extends JFrame {
         return header;
     }
 
-    // ---------- Form card + Insights panel ----------
+    // ---------- Form card + Centered Insights panel ----------
     private JPanel createForm() {
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setBackground(BG);
@@ -122,50 +120,61 @@ public class Maptestergui extends JFrame {
         nameField.addActionListener(e -> numberField.requestFocus());
         numberField.addActionListener(e -> saveEntry());
 
-        // ============ BOTTOM: Insights Panel ============
-        JPanel insightsCard = new JPanel(new BorderLayout(0, 10));
+        // ============ BOTTOM: Insights Panel (CENTERED) ============
+        JPanel insightsCard = new JPanel(new BorderLayout(0, 12));
         insightsCard.setBackground(Color.WHITE);
         insightsCard.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(229, 231, 235), 1, true),
-                new EmptyBorder(16, 20, 16, 20)));
+                new EmptyBorder(20, 20, 20, 20)));
 
-        JLabel title = new JLabel("Phone Book Insights");
+        // --- Centered title and subtitle ---
+        JLabel title = new JLabel("Phone Book Insights", SwingConstants.CENTER);
         title.setFont(new Font("Segoe UI", Font.BOLD, 15));
         title.setForeground(TEXT);
 
         JLabel subtitle = new JLabel(
-                "Live statistics computed from the HashMap (values can repeat, keys cannot).");
+                "Live statistics computed from the HashMap (values can repeat, keys cannot).",
+                SwingConstants.CENTER);
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         subtitle.setForeground(MUTED);
 
+        // --- Centered stats grid ---
         JPanel stats = new JPanel(new GridLayout(2, 3, 12, 12));
         stats.setOpaque(false);
 
         insTotal      = createStatTile(stats, "Total Contacts", "0", PRIMARY);
         insUnique     = createStatTile(stats, "Unique Numbers", "0", SUCCESS);
         insShared     = createStatTile(stats, "Shared Numbers", "0", WARNING);
-        insLongest    = createStatTile(stats, "Longest Name", "—", new Color(139, 92, 246));
+        insLongest    = createStatTile(stats, "Longest Name", "—", VIOLET);
         insShortest   = createStatTile(stats, "Shortest Number", "—", new Color(236, 72, 153));
         insMostShared = createStatTile(stats, "Most Shared", "—", new Color(14, 165, 233));
+
+        // --- Centered buttons ---
+        JButton demoBtn = createButton("Run HashMap Demo", VIOLET);
+        demoBtn.setPreferredSize(new Dimension(180, 34));
+        demoBtn.addActionListener(e -> runRawHashMapDemo());
 
         JButton refreshBtn = createButton("Refresh Insights", PRIMARY);
         refreshBtn.setPreferredSize(new Dimension(160, 34));
         refreshBtn.addActionListener(e -> updateInsights());
 
+        JPanel bottomBox = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        bottomBox.setOpaque(false);
+        bottomBox.add(demoBtn);
+        bottomBox.add(refreshBtn);
+
+        // --- Assemble the insights card ---
         JPanel topBox = new JPanel();
         topBox.setLayout(new BoxLayout(topBox, BoxLayout.Y_AXIS));
         topBox.setOpaque(false);
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
-        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        stats.setAlignmentX(Component.CENTER_ALIGNMENT);
         topBox.add(title);
         topBox.add(Box.createVerticalStrut(4));
         topBox.add(subtitle);
-        topBox.add(Box.createVerticalStrut(12));
+        topBox.add(Box.createVerticalStrut(16));
         topBox.add(stats);
-
-        JPanel bottomBox = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        bottomBox.setOpaque(false);
-        bottomBox.add(refreshBtn);
 
         insightsCard.add(topBox, BorderLayout.CENTER);
         insightsCard.add(bottomBox, BorderLayout.SOUTH);
@@ -204,6 +213,46 @@ public class Maptestergui extends JFrame {
 
         parent.add(tile);
         return value;
+    }
+
+    // ---------- Raw HashMap Demo (bypasses GUI logic) ----------
+    private void runRawHashMapDemo() {
+        MapTester demo = new MapTester();
+
+        // --- Duplicate Keys ---
+        demo.enterNumber("Alice", "111-1111");
+        demo.enterNumber("Alice", "222-2222"); // overwrites
+
+        // --- Duplicate Values ---
+        demo.enterNumber("Bob", "555-5555");
+        demo.enterNumber("Charlie", "555-5555"); // allowed
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("========== DUPLICATE KEYS ==========\n");
+        sb.append("  put(\"Alice\", \"111-1111\")\n");
+        sb.append("  put(\"Alice\", \"222-2222\")   <- same key\n");
+        sb.append("  -> lookupNumber(\"Alice\") = ")
+          .append(demo.lookupNumber("Alice")).append("\n");
+        sb.append("  -> RESULT: 2nd value REPLACED the 1st.\n");
+        sb.append("  -> Reason: HashMap keys must be unique.\n\n");
+
+        sb.append("========= DUPLICATE VALUES =========\n");
+        sb.append("  put(\"Bob\",     \"555-5555\")\n");
+        sb.append("  put(\"Charlie\", \"555-5555\")   <- same value\n");
+        sb.append("  -> Bob     = ").append(demo.lookupNumber("Bob")).append("\n");
+        sb.append("  -> Charlie = ").append(demo.lookupNumber("Charlie")).append("\n");
+        sb.append("  -> RESULT: BOTH entries exist.\n");
+        sb.append("  -> Reason: HashMap allows duplicate VALUES.\n");
+
+        JTextArea ta = new JTextArea(sb.toString(), 16, 46);
+        ta.setEditable(false);
+        ta.setFont(new Font("Consolas", Font.PLAIN, 12));
+        ta.setBackground(new Color(249, 250, 251));
+        ta.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JScrollPane sp = new JScrollPane(ta);
+
+        JOptionPane.showMessageDialog(this, sp, "Raw HashMap Demo",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     // ---------- Compute and show live statistics ----------
@@ -293,21 +342,6 @@ public class Maptestergui extends JFrame {
         top.add(title, BorderLayout.WEST);
         top.add(pill, BorderLayout.EAST);
 
-        showAllButton = new JButton("\u2190 Show all contacts");
-        showAllButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        showAllButton.setForeground(PRIMARY);
-        showAllButton.setContentAreaFilled(false);
-        showAllButton.setBorderPainted(false);
-        showAllButton.setFocusPainted(false);
-        showAllButton.setHorizontalAlignment(SwingConstants.LEFT);
-        showAllButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        showAllButton.setVisible(false);
-        showAllButton.addActionListener(e -> {
-            filterKeys = null;
-            refreshContacts();
-        });
-        top.add(showAllButton, BorderLayout.SOUTH);
-
         contactList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         contactList.setFixedCellHeight(66);
         contactList.setCellRenderer(new ListCellRenderer<String>() {
@@ -335,10 +369,9 @@ public class Maptestergui extends JFrame {
             public Component getListCellRendererComponent(JList<? extends String> list, String name,
                     int index, boolean selected, boolean focus) {
                 String number = phoneBook.lookupNumber(name);
-                String shown = baseName(name);
-                nameLabel.setText(shown);
+                nameLabel.setText(name);
                 numberLabel.setText(number == null ? "" : number);
-                avatar.set(shown, selected);
+                avatar.set(name, selected);
                 row.setBackground(selected ? new Color(239, 246, 255) : Color.WHITE);
                 nameLabel.setForeground(selected ? new Color(30, 58, 138) : TEXT);
                 return row;
@@ -393,11 +426,8 @@ public class Maptestergui extends JFrame {
     private void refreshContacts() {
         listModel.clear();
         for (String key : phoneBook.getNames()) {
-            if (filterKeys == null || filterKeys.contains(key)) {
-                listModel.addElement(key);
-            }
+            listModel.addElement(key);
         }
-        showAllButton.setVisible(filterKeys != null);
         countLabel.setText(String.valueOf(listModel.size()));
         cardLayout.show(listCards, listModel.isEmpty() ? "empty" : "list");
         updateDeleteButton();
@@ -415,7 +445,7 @@ public class Maptestergui extends JFrame {
         if (name == null) return;
         String number = phoneBook.lookupNumber(name);
         boolean sure = confirm("Delete Contact",
-                "Delete \"" + baseName(name) + "\" (" + number + ") from the phone book?\n\n"
+                "Delete \"" + name + "\" (" + number + ") from the phone book?\n\n"
               + "This cannot be undone.",
                 ERROR, "No, keep it", "Yes, delete");
         if (!sure) return;
@@ -423,7 +453,7 @@ public class Maptestergui extends JFrame {
         refreshContacts();
     }
 
-    // ---------- Save entry ----------
+    // ---------- Save entry (pure HashMap behavior: put overwrites) ----------
     private void saveEntry() {
         String name = nameField.getText().trim();
         String number = numberField.getText().trim();
@@ -450,90 +480,29 @@ public class Maptestergui extends JFrame {
             if (!sure) return;
         }
 
-        // Check for exact duplicate (same name, same number)
-        String duplicateKey = null;
-        for (String key : phoneBook.getNames()) {
-            if (baseName(key).equalsIgnoreCase(name) && number.equals(phoneBook.lookupNumber(key))) {
-                duplicateKey = key;
-                break;
-            }
-        }
-
-        if (duplicateKey != null) {
-            // --- SIMPLE: Replace or Cancel ---
+        // ---- PURE HASHMAP BEHAVIOR ----
+        String existing = phoneBook.lookupNumber(name);
+        if (existing != null) {
             boolean replace = confirm("Already Exists",
-                    "\"" + name + "\" is already saved with this same number.\n\n"
-                  + "Do you want to replace it?",
+                    "\"" + name + "\" is already saved as " + existing + ".\n\n"
+                  + "Do you want to replace it with " + number + "?",
                     WARNING, "No, cancel", "Yes, replace");
             if (!replace) return;
-
-            phoneBook.enterNumber(duplicateKey, number);
-            filterKeys = null;
-            refreshContacts();
-            contactList.setSelectedValue(duplicateKey, true);
-            nameField.setText("");
-            numberField.setText("");
-            nameField.requestFocus();
-            return;
         }
 
-        // No exact duplicate: check if same name exists with a different number
-        String sameNameDifferentNum = null;
-        for (String key : phoneBook.getNames()) {
-            if (baseName(key).equalsIgnoreCase(name)) {
-                sameNameDifferentNum = key;
-                break;
-            }
-        }
+        phoneBook.enterNumber(name, number);
 
-        String saveKey;
-        if (sameNameDifferentNum != null) {
-            // Same name, different number → save as new entry
-            saveKey = uniqueKey(name);
-        } else {
-            saveKey = name;
-        }
-
-        // Check if the number is already used by someone else
-        String sharedWith = sharedWithOthers(name, number);
-        if (sharedWith != null) {
-            boolean saveAnyway = confirm("Number Already Used",
-                    "This number is already saved for: " + sharedWith + ".\n\n"
-                  + "That is fine for a shared number (family, office). Save it anyway?",
-                    WARNING, "No, go back", "Yes, save anyway");
-            if (!saveAnyway) return;
-        }
-
-        phoneBook.enterNumber(saveKey, number);
-        filterKeys = null;
         refreshContacts();
-        contactList.setSelectedValue(saveKey, true);
+        contactList.setSelectedValue(name, true);
 
         nameField.setText("");
         numberField.setText("");
         nameField.requestFocus();
     }
 
+    // Since we no longer append "(2)" suffixes, baseName just returns the key.
     private static String baseName(String key) {
-        return key.replaceFirst(" \\(\\d+\\)$", "");
-    }
-
-    private String uniqueKey(String name) {
-        if (phoneBook.lookupNumber(name) == null) return name;
-        int n = 2;
-        while (phoneBook.lookupNumber(name + " (" + n + ")") != null) n++;
-        return name + " (" + n + ")";
-    }
-
-    private String sharedWithOthers(String name, String number) {
-        StringBuilder sb = new StringBuilder();
-        for (String key : phoneBook.getNames()) {
-            if (!baseName(key).equalsIgnoreCase(name) && number.equals(phoneBook.lookupNumber(key))) {
-                if (sb.length() > 0) sb.append(", ");
-                sb.append(baseName(key));
-            }
-        }
-        return sb.length() == 0 ? null : sb.toString();
+        return key;
     }
 
     private String validateNumber(String number) {
@@ -575,7 +544,7 @@ public class Maptestergui extends JFrame {
 
         java.util.List<String> matches = new java.util.ArrayList<String>();
         for (String key : phoneBook.getNames()) {
-            if (baseName(key).equalsIgnoreCase(name)) matches.add(key);
+            if (key.equalsIgnoreCase(name)) matches.add(key);
         }
         if (matches.isEmpty()) {
             showMessage("No Entry Found", "No contact named \"" + name + "\" was found.", WARNING);
@@ -609,10 +578,9 @@ public class Maptestergui extends JFrame {
     }
 
     private void showMatches(java.util.List<String> matches) {
-        filterKeys = matches;
         refreshContacts();
         String first = matches.get(0);
-        nameField.setText(baseName(first));
+        nameField.setText(first);
         numberField.setText(phoneBook.lookupNumber(first));
         contactList.setSelectedValue(first, true);
     }
@@ -665,7 +633,6 @@ public class Maptestergui extends JFrame {
     //  Custom pop-up dialog
     // =====================================================================
     private static class StyledDialog extends JDialog {
-
         int result = -1;
         String input = null;
         private JTextField inputField;
@@ -750,9 +717,7 @@ public class Maptestergui extends JFrame {
             setLocationRelativeTo(owner);
         }
 
-        void showDialog() {
-            setVisible(true);
-        }
+        void showDialog() { setVisible(true); }
 
         private static JButton makeButton(String text, Color base) {
             boolean light = (base.getRed() + base.getGreen() + base.getBlue()) / 3 > 200;
@@ -768,14 +733,8 @@ public class Maptestergui extends JFrame {
             b.setPreferredSize(new Dimension(130, 42));
             b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             b.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    b.setBackground(hover);
-                }
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    b.setBackground(base);
-                }
+                public void mouseEntered(MouseEvent e) { b.setBackground(hover); }
+                public void mouseExited(MouseEvent e) { b.setBackground(base); }
             });
             return b;
         }
@@ -785,9 +744,7 @@ public class Maptestergui extends JFrame {
         private String letter = "?";
         private boolean selected;
 
-        Avatar() {
-            setPreferredSize(new Dimension(40, 40));
-        }
+        Avatar() { setPreferredSize(new Dimension(40, 40)); }
 
         void set(String name, boolean selected) {
             this.letter = name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase();
