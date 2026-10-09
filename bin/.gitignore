@@ -1,0 +1,36 @@
+# Compiled Java files
+*.class
+
+# Java build output
+bin/
+out/
+build/
+
+# Eclipse IDE files
+.metadata/
+.settings/
+.recommenders/
+.externalToolBuilders/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Visual Studio Code
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Local environment files
+.env
+.env.*
