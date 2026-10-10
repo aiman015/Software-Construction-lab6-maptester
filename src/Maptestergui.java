@@ -511,10 +511,10 @@ public class Maptestergui extends JFrame {
             return "A phone number must contain digits only (an optional + is allowed at the start).";
         }
         String digits = number.replace("+", "");
+        if (digits.matches("0+")) return "A phone number cannot be all zeros.";
         if (digits.length() < 7 || digits.length() > 15) {
             return "A phone number must be 7 to 15 digits long.";
         }
-        if (digits.matches("0+")) return "A phone number cannot be all zeros.";
         return null;
     }
 
